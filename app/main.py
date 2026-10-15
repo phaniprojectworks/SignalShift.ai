@@ -20,7 +20,7 @@ from fastapi.staticfiles import StaticFiles
 from app.config import BASE_DIR, Settings, get_settings
 from app.db import Database, init_db
 from app.logging_setup import setup_logging
-from app.routers import alerts, ask, dashboards, demo, orders, store, telegram
+from app.routers import ads, alerts, ask, dashboards, demo, orders, store, telegram
 from app.services.demo import DemoService
 from app.services.ask import AskService
 from app.services.actions import ActionService
@@ -91,7 +91,7 @@ def create_app(db_path: str | None = None, evaluate: EvaluateFn | None = None, s
         await bus.stop()
         db.dispose()
 
-    app = FastAPI(title="SignalShift AI", version="0.3.0", lifespan=lifespan)
+    app = FastAPI(title="Ad-Assist", version="0.3.0", lifespan=lifespan)
     app.state.db = db
     app.state.bus = bus
     app.state.engine = engine
@@ -110,6 +110,7 @@ def create_app(db_path: str | None = None, evaluate: EvaluateFn | None = None, s
     app.include_router(telegram.router)
     app.include_router(ask.router)
     app.include_router(demo.router)
+    app.include_router(ads.router)
     app.mount("/static", StaticFiles(directory=BASE_DIR / "app" / "web"), name="static")
     http_log = logging.getLogger("signalshift.http")
 

@@ -3,128 +3,441 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SignalShift Dashboard</title>
+  <title>Ad-Assist</title>
   <link rel="stylesheet" href="/static/styles.css">
+  <script>
+    /* apply the saved theme before first paint so there is no flash */
+    try { const t = localStorage.getItem("adassist.theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
   <script src="/static/vendor/plotly-basic.min.js"></script>
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">SignalShift AI<small>for Solenest</small></div>
-    <nav class="nav"><a href="/dashboard" class="active">Dashboard</a><a href="/store" target="_blank" rel="noopener">Store ↗</a></nav>
-    <span class="pill sample" title="All figures are generated sample data for a fictional brand">Synthetic sample data</span>
-    <div class="spacer"></div>
-    <button class="btn" id="btn-rush" title="Fire a burst of orders weighted to UK 8 and UK 9 (demo)">⚡ Simulate rush</button>
-    <button class="btn" id="btn-reset" title="Restore the seeded demo state (demo)">↺ Reset demo</button>
-    <span class="pill num" id="asof">–</span>
-    <span class="pill"><span id="live-dot" class="dot"></span><span id="live-label">connecting…</span></span>
-  </header>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-logo" viewBox="0 0 32 32"><rect width="32" height="32" rx="9" fill="currentColor" opacity=".18"/><path d="M8 21l5-6 4 3 7-9" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="24" cy="9" r="2.6" fill="currentColor"/></symbol>
+      <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+      <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M4 13l2.5-8h11L20 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1zM4 13h5l1 2h4l1-2h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+      <symbol id="i-box" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+      <symbol id="i-mega" viewBox="0 0 24 24"><path d="M4 10v4h3l7 4V6L7 10zM17 9a4 4 0 0 1 0 6M7 14l1.5 5h2.5L10 15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+      <symbol id="i-piggy" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+      <symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h2.5l2.2 10.5h10.6L20.5 7H6.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.5" cy="19" r="1.6" fill="currentColor"/><circle cx="17" cy="19" r="1.6" fill="currentColor"/></symbol>
+      <symbol id="i-chat"viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 10h8M8 13h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+      <symbol id="i-shoe" viewBox="0 0 24 24"><path d="M3 16v-5l4-4 3 3 3-1 3 3 5 1v3zM3 16v2h18v-2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+      <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3 12V4h8l10 10-8 8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="7.5" cy="8.5" r="1.5" fill="currentColor"/></symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+      <symbol id="i-logout" viewBox="0 0 24 24"><path d="M14 4h5v16h-5M10 8l-4 4 4 4M6 12h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-fwd" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+      <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.5-5.8M4 4v4h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 12.5l2.5 2.5L16 9.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    </defs>
+  </svg>
 
-  <main class="wrap">
-    <section class="tiles">
-      <div class="tile" id="t-orders"><div class="label">Orders today</div><div class="value" id="k-orders">–</div><div class="sub" id="k-units">–</div></div>
-      <div class="tile" id="t-revenue"><div class="label">Revenue today</div><div class="value" id="k-revenue">–</div><div class="sub">all channels</div></div>
-      <div class="tile" id="t-spend"><div class="label">Ad spend today</div><div class="value" id="k-spend">–</div><div class="sub" id="k-clicks">–</div></div>
-      <div class="tile alarm" id="t-wasted"><div class="label">Wasted on out-of-stock clicks</div><div class="value" id="k-wasted">–</div><div class="sub" id="k-wasted30">–</div></div>
-      <div class="tile" id="t-alerts"><div class="label">Open alerts</div><div class="value" id="k-alerts">–</div><div class="sub" id="k-alerts-sub">–</div></div>
-      <div class="tile" id="t-saved"><div class="label">Ad spend avoided</div><div class="value" id="k-saved">–</div><div class="sub" id="k-protected">–</div></div>
-    </section>
+  <!-- ============================== LOGIN ============================== -->
+  <section id="login-view" class="login" hidden>
+    <button class="icon-btn theme-toggle login-theme" type="button" aria-label="Toggle dark mode"><svg class="ico-sun"><use href="#i-sun"/></svg><svg class="ico-moon"><use href="#i-moon"/></svg></button>
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="logo-row"><svg class="logo"><use href="#i-logo"/></svg><span>Ad-Assist</span></div>
+        <h1>Stop paying for ads on sizes that are about to sell out.</h1>
+        <ul>
+          <li>Size-level stockout forecasts, with the reason for each</li>
+          <li>Pause, shift budget and reorder in one tap</li>
+          <li>Ask questions about your store in plain language</li>
+        </ul>
+        <span class="pill sample on-dark">Synthetic sample data</span>
+      </div>
+      <form id="login-form" class="login-form" autocomplete="off" novalidate>
+        <h2>Sign in</h2>
+        <p class="muted">Choose who you are for this demo.</p>
+        <div class="seg" role="radiogroup" aria-label="Sign in as">
+          <label><input type="radio" name="role" value="owner" checked><span>Business owner</span></label>
+          <label><input type="radio" name="role" value="customer"><span>Customer</span></label>
+        </div>
+        <label class="field">Email<input id="login-email" type="email" required placeholder="you@example.com"></label>
+        <label class="field">Password<input id="login-pass" type="password" required placeholder="••••••"></label>
+        <p id="login-error" class="form-error" role="alert"></p>
+        <button class="btn primary block" type="submit">Sign in</button>
+        <div class="demo-creds">
+          <span class="faint">Demo accounts (password <code>demo123</code>)</span>
+          <button type="button" class="link" data-fill="owner">owner@solenest.in</button>
+          <button type="button" class="link" data-fill="customer">customer@demo.in</button>
+        </div>
+        <p class="faint">Demo sign-in only. It runs in your browser and does not protect any data.</p>
+      </form>
+    </div>
+  </section>
 
-    <div class="dash">
-      <div>
-        <section class="panel" id="ask">
-          <div class="panel-head"><h2>Ask SignalShift</h2><span class="faint">answers come from fixed queries over your data, never free-form SQL</span></div>
-          <form id="ask-form" class="ask-row" autocomplete="off">
-            <input id="ask-input" class="ask-input" maxlength="500" placeholder="e.g. How much ad spend did we save today?" aria-label="Ask a question">
-            <button class="btn primary" type="submit">Ask</button>
-          </form>
-          <div class="tabs" id="ask-suggest" style="margin:10px 0 4px">
-            <button class="tab" type="button">How many Festive White UK 9 did we sell today?</button>
-            <button class="tab" type="button">Which products will run out this week?</button>
-            <button class="tab" type="button">How much ad spend did we save today?</button>
-            <button class="tab" type="button">Why did you recommend pausing the white sneaker campaign?</button>
+  <!-- ============================== APP SHELL ============================== -->
+  <div id="app-shell" class="shell" hidden>
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+      <div class="side-brand"><svg class="logo"><use href="#i-logo"/></svg><span>Ad-Assist</span></div>
+      <nav class="side-nav owner-only">
+        <a href="#/owner/overview" data-nav="overview"><svg><use href="#i-home"/></svg><span>Overview</span></a>
+        <a href="#/owner/alerts" data-nav="alerts"><svg><use href="#i-inbox"/></svg><span>Alerts</span><b class="nav-count" id="nav-alerts-count" hidden></b></a>
+        <a href="#/owner/inventory" data-nav="inventory"><svg><use href="#i-box"/></svg><span>Inventory</span></a>
+        <a href="#/owner/sales" data-nav="sales"><svg><use href="#i-cart"/></svg><span>Sales</span></a>
+        <a href="#/owner/campaigns" data-nav="campaigns"><svg><use href="#i-mega"/></svg><span>Campaigns</span></a>
+        <a href="#/owner/savings" data-nav="savings"><svg><use href="#i-piggy"/></svg><span>Savings</span></a>
+        <a href="#/owner/ask" data-nav="ask"><svg><use href="#i-chat"/></svg><span>Ask</span></a>
+      </nav>
+      <nav class="side-nav customer-only">
+        <a href="#/customer/ads" data-nav="ads"><svg><use href="#i-mega"/></svg><span>Ads for you</span></a>
+        <a href="#/customer/hero" data-nav="hero"><svg><use href="#i-shoe"/></svg><span>Hero sneakers</span></a>
+        <a href="#/customer/core" data-nav="core"><svg><use href="#i-shoe"/></svg><span>Core sneakers</span></a>
+        <a href="#/customer/accessory" data-nav="accessory"><svg><use href="#i-tag"/></svg><span>Accessories</span></a>
+        <a href="#/customer/slow" data-nav="slow"><svg><use href="#i-clock"/></svg><span>Last season</span></a>
+        <a href="#/customer/all" data-nav="all"><svg><use href="#i-grid"/></svg><span>All products</span></a>
+      </nav>
+      <button class="side-logout" id="btn-logout" type="button"><svg><use href="#i-logout"/></svg><span>Log out</span></button>
+    </aside>
+    <div class="scrim" id="scrim"></div>
+
+    <div class="main">
+      <header class="topbar">
+        <button class="icon-btn menu-btn" id="btn-menu" type="button" aria-label="Open menu"><svg><use href="#i-menu"/></svg></button>
+        <div class="histnav" role="group" aria-label="History">
+          <button class="icon-btn" id="btn-back" type="button" aria-label="Back" title="Back"><svg><use href="#i-back"/></svg></button>
+          <button class="icon-btn" id="btn-fwd" type="button" aria-label="Forward" title="Forward"><svg><use href="#i-fwd"/></svg></button>
+        </div>
+        <form id="ask-form" class="searchbar owner-only" autocomplete="off" role="search">
+          <svg><use href="#i-search"/></svg>
+          <input id="ask-input" maxlength="500" placeholder="Ask anything, e.g. How much ad spend did we save today?" aria-label="Ask a question">
+          <button class="btn primary" type="submit">Ask</button>
+        </form>
+        <div class="crumb customer-only"><b>Solenest</b> <span class="faint">Festive store</span></div>
+        <div class="spacer"></div>
+        <span class="pill live-pill"><span id="live-dot" class="dot"></span><span id="live-label">connecting…</span></span>
+        <div class="demo-ctl owner-only" role="group" aria-label="Demo controls">
+          <button class="btn ghost" id="btn-rush" type="button" title="Fire a burst of orders weighted to UK 8 and UK 9 (demo)"><svg><use href="#i-bolt"/></svg><span>Simulate rush</span></button>
+          <button class="btn ghost" id="btn-reset" type="button" title="Restore the seeded demo state (demo)"><svg><use href="#i-reset"/></svg><span>Reset demo</span></button>
+        </div>
+        <button class="icon-btn theme-toggle" type="button" aria-label="Toggle dark mode" title="Light / dark"><svg class="ico-sun"><use href="#i-sun"/></svg><svg class="ico-moon"><use href="#i-moon"/></svg></button>
+        <div class="pop-wrap owner-only">
+          <button class="icon-btn" id="btn-bell" type="button" aria-label="Notifications" aria-haspopup="true" aria-expanded="false" title="Notifications">
+            <svg><use href="#i-bell"/></svg><span class="badge" id="bell-badge" hidden>0</span>
+          </button>
+          <div class="popover notif" id="notif-panel" hidden>
+            <div class="pop-head"><b>Notifications</b><a class="link" href="#/owner/alerts" data-close-pop>View all</a></div>
+            <ul id="notif-list"><li class="faint pad">No notifications yet.</li></ul>
           </div>
-          <div id="ask-answers"></div>
+        </div>
+        <div class="pop-wrap">
+          <button class="user-chip" id="btn-user" type="button" aria-haspopup="true" aria-expanded="false">
+            <span class="avatar" id="user-avatar">–</span><span class="user-meta"><b id="user-name">–</b><small id="user-role">–</small></span>
+          </button>
+          <div class="popover user-menu" id="user-menu" hidden>
+            <div class="pad"><b id="user-menu-name">–</b><div class="faint" id="user-menu-email">–</div></div>
+            <button type="button" class="menu-item narrow-only owner-only" data-proxy="#btn-rush">Simulate rush (demo)</button>
+            <button type="button" class="menu-item narrow-only owner-only" data-proxy="#btn-reset">Reset demo</button>
+            <button type="button" class="menu-item" id="btn-switch-role">Switch view</button>
+            <button type="button" class="menu-item" id="btn-logout-2">Log out</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="wrap">
+        <!-- ===================== OWNER: OVERVIEW ===================== -->
+        <section class="view owner-only" data-view="overview">
+          <div class="ov-top">
+            <div class="banner">
+              <div class="banner-text">
+                <h1>Welcome, <span id="welcome-name">–</span></h1>
+                <p class="biz"><b id="biz-name">Solenest</b> · D2C footwear &amp; accessories · Diwali season</p>
+                <div class="status-row">
+                  <span class="status-chip" id="biz-status"><span class="dot"></span><span id="biz-status-text">Checking status…</span></span>
+                  <span class="pill num" id="asof">–</span>
+                  <span class="pill sample" title="All figures are generated sample data for a fictional brand">Synthetic sample data</span>
+                </div>
+              </div>
+              <svg class="banner-art" viewBox="0 0 220 150" aria-hidden="true">
+                <rect x="18" y="92" width="22" height="40" rx="5" fill="currentColor" opacity=".25"/>
+                <rect x="50" y="70" width="22" height="62" rx="5" fill="currentColor" opacity=".4"/>
+                <rect x="82" y="52" width="22" height="80" rx="5" fill="currentColor" opacity=".6"/>
+                <rect x="114" y="80" width="22" height="52" rx="5" fill="currentColor" opacity=".4"/>
+                <path d="M20 80 L60 58 L92 40 L124 66 L176 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="176" cy="24" r="9" fill="currentColor"/>
+                <circle cx="176" cy="24" r="18" fill="currentColor" opacity=".15"/>
+                <rect x="150" y="96" width="56" height="36" rx="10" fill="currentColor" opacity=".18"/>
+                <path d="M164 114h28M164 122h18" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" opacity=".7"/>
+              </svg>
+            </div>
+            <section class="panel attention">
+              <div class="panel-head"><h2>Needs attention</h2><div class="spacer"></div><a class="link" href="#/owner/alerts">All alerts</a></div>
+              <div id="attention"><p class="faint">Loading…</p></div>
+            </section>
+          </div>
+
+          <section class="tiles">
+            <div class="tile" id="t-orders"><div class="label">Orders today</div><div class="value" id="k-orders">–</div><div class="sub" id="k-units">–</div></div>
+            <div class="tile" id="t-revenue"><div class="label">Revenue today</div><div class="value" id="k-revenue">–</div><div class="sub">all channels</div></div>
+            <div class="tile go" id="t-spend" data-go="#/owner/campaigns" tabindex="0"><div class="label">Ad spend today</div><div class="value" id="k-spend">–</div><div class="sub" id="k-clicks">–</div></div>
+            <div class="tile go alarm" id="t-wasted" data-go="#/owner/campaigns" tabindex="0"><div class="label">Wasted on out-of-stock clicks</div><div class="value" id="k-wasted">–</div><div class="sub" id="k-wasted30">–</div></div>
+            <div class="tile go" id="t-alerts" data-go="#/owner/alerts" tabindex="0"><div class="label">Open alerts</div><div class="value" id="k-alerts">–</div><div class="sub" id="k-alerts-sub">–</div></div>
+            <div class="tile go" id="t-saved" data-go="#/owner/savings" tabindex="0"><div class="label">Ad spend avoided</div><div class="value" id="k-saved">–</div><div class="sub" id="k-protected">–</div></div>
+          </section>
+
+          <section class="panel" id="sales">
+            <div class="panel-head"><h2>Sales</h2><span class="faint">orders per hour, today vs yesterday</span></div>
+            <div class="two">
+              <div id="chart-hourly" class="chart" role="img" aria-label="Orders per hour today and yesterday"></div>
+              <div>
+                <table aria-label="Top products today">
+                  <thead><tr><th>Top products today</th><th class="r">Units</th><th class="r">Revenue</th></tr></thead>
+                  <tbody id="top-products"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
         </section>
 
-        <section class="panel" id="sales">
-          <div class="panel-head"><h2>Sales</h2><span class="faint">orders per hour, today vs yesterday</span></div>
-          <div class="two">
-            <div id="chart-hourly" class="chart" role="img" aria-label="Orders per hour today and yesterday"></div>
-            <div>
-              <table aria-label="Top products today">
-                <thead><tr><th>Top products today</th><th class="r">Units</th><th class="r">Revenue</th></tr></thead>
-                <tbody id="top-products"></tbody>
+        <!-- ===================== OWNER: ALERTS ===================== -->
+        <section class="view owner-only" data-view="alerts">
+          <div class="view-head"><h1>Alerts</h1><p class="muted">Each alert explains the risk and proposes a plan. Approve runs it through the mock ad and supplier APIs.</p></div>
+          <section class="panel" id="inbox-panel" aria-label="Owner inbox">
+            <div class="panel-head">
+              <h2>Inbox</h2>
+              <div class="tabs" id="inbox-tabs">
+                <button class="tab active" data-s="open">Open</button>
+                <button class="tab" data-s="">All</button>
+              </div>
+            </div>
+            <div id="inbox" class="inbox-grid"><p class="faint">Loading…</p></div>
+          </section>
+        </section>
+
+        <!-- ===================== OWNER: INVENTORY ===================== -->
+        <section class="view owner-only" data-view="inventory">
+          <div class="view-head"><h1>Inventory</h1><p class="muted">A product can look healthy in total while the sizes customers want are almost gone.</p></div>
+          <section class="panel" id="inventory">
+            <div class="panel-head">
+              <h2>Stock by size</h2>
+              <div class="tabs" id="inv-tabs">
+                <button class="tab active" data-g="hero">Hero</button>
+                <button class="tab" data-g="core">Core</button>
+                <button class="tab" data-g="accessory">Accessories</button>
+                <button class="tab" data-g="slow">Last season</button>
+              </div>
+              <div class="spacer"></div>
+              <div class="legend">
+                <span class="st st-out">Out</span><span class="st st-low">Low (&lt; 24 h)</span>
+                <span class="st st-short">Runs out before restock</span><span class="st st-ok">OK</span>
+              </div>
+            </div>
+            <div class="toolbar">
+              <p class="faint">Each cell: units available · hours/days of cover at the current forecast.</p>
+              <div class="spacer"></div>
+              <label class="faint" for="inv-sort">Sort</label>
+              <select id="inv-sort" class="inp">
+                <option value="qty-asc" selected>Quantity: lowest first</option>
+                <option value="qty-desc">Quantity: highest first</option>
+                <option value="name">Name A–Z</option>
+              </select>
+            </div>
+            <div class="scroll-x"><div class="heat" id="heatmap"></div></div>
+          </section>
+          <section class="panel">
+            <div class="panel-head"><h2>Sizes at risk</h2><span class="faint" id="risk-sort-note">lowest quantity first</span></div>
+            <div class="scroll-x">
+              <table>
+                <thead><tr><th>Product</th><th>Size</th><th class="r">On hand</th><th class="r">In transit</th><th class="r">Demand / day</th><th class="r">Cover</th><th>Status</th></tr></thead>
+                <tbody id="risk-table"></tbody>
               </table>
             </div>
-          </div>
+          </section>
         </section>
 
-        <section class="panel" id="inventory">
-          <div class="panel-head">
-            <h2>Inventory by size</h2>
-            <div class="tabs" id="inv-tabs">
-              <button class="tab active" data-g="hero">Hero</button>
-              <button class="tab" data-g="core">Core</button>
-              <button class="tab" data-g="accessory">Accessories</button>
-              <button class="tab" data-g="slow">Last season</button>
+        <!-- ===================== OWNER: SALES ===================== -->
+        <section class="view owner-only" data-view="sales">
+          <div class="view-head"><h1>Sales</h1><p class="muted">Every order, and how each SKU has sold over the last 3 months.</p></div>
+          <section class="tiles">
+            <div class="tile"><div class="label">Orders</div><div class="value" id="o-count">–</div><div class="sub" id="o-scope">–</div></div>
+            <div class="tile"><div class="label">Units</div><div class="value" id="o-units">–</div><div class="sub">in matching orders</div></div>
+            <div class="tile"><div class="label">Revenue</div><div class="value" id="o-revenue">–</div><div class="sub" id="o-aov">–</div></div>
+          </section>
+
+          <section class="panel" id="orders-panel">
+            <div class="panel-head"><h2>All orders</h2><span class="faint">newest first · new orders appear live on the first page</span></div>
+            <form class="toolbar" id="orders-filter" autocomplete="off">
+              <input class="inp grow" id="o-q" type="search" maxlength="80" placeholder="Search order #, SKU, product, size or city" aria-label="Search orders">
+              <select class="inp" id="o-days" aria-label="Period">
+                <option value="1">Today</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option>
+                <option value="90">Last 3 months</option><option value="" selected>All time</option>
+              </select>
+              <select class="inp" id="o-channel" aria-label="Channel">
+                <option value="">All channels</option><option value="web">Web</option><option value="app">App</option>
+                <option value="instagram_shop">Instagram shop</option><option value="store_demo">Demo store</option><option value="simulator">Rush simulator</option>
+              </select>
+            </form>
+            <div class="scroll-x">
+              <table class="orders">
+                <thead><tr><th>Order</th><th>Date &amp; time</th><th>Channel</th><th>City</th><th>Items</th><th class="r">Units</th><th class="r">Total</th></tr></thead>
+                <tbody id="order-rows"><tr><td colspan="7" class="faint">Loading…</td></tr></tbody>
+              </table>
             </div>
-            <div class="spacer"></div>
-            <div class="legend">
-              <span class="st st-out">Out</span><span class="st st-low">Low (&lt; 24 h)</span>
-              <span class="st st-short">Runs out before restock</span><span class="st st-ok">OK</span>
+            <div class="pager">
+              <span class="faint" id="o-range">–</span><div class="spacer"></div>
+              <button class="btn" type="button" id="o-prev">← Newer</button>
+              <button class="btn" type="button" id="o-next">Older →</button>
             </div>
-          </div>
-          <p class="faint" style="margin:0 0 10px">Each cell: units available · hours/days of cover at the current forecast. A product can look healthy in total while the sizes customers want are almost gone.</p>
-          <div class="scroll-x"><div class="heat" id="heatmap"></div></div>
-          <h3 style="font-size:1rem;margin:18px 0 6px">Sizes at risk</h3>
-          <div class="scroll-x">
-            <table>
-              <thead><tr><th>Product</th><th>Size</th><th class="r">On hand</th><th class="r">In transit</th><th class="r">Demand / day</th><th class="r">Cover</th><th>Status</th></tr></thead>
-              <tbody id="risk-table"></tbody>
-            </table>
-          </div>
+          </section>
+
+          <section class="panel" id="trend-panel">
+            <div class="panel-head"><h2>Sales trend by SKU</h2><span class="faint" id="trend-scope">last 13 weeks</span></div>
+            <div class="toolbar">
+              <div class="tabs" id="trend-tabs">
+                <button class="tab active" data-g="">All</button><button class="tab" data-g="hero">Hero</button>
+                <button class="tab" data-g="core">Core</button><button class="tab" data-g="accessory">Accessories</button>
+                <button class="tab" data-g="slow">Last season</button>
+              </div>
+              <div class="spacer"></div>
+              <input class="inp" id="trend-q" type="search" placeholder="Filter SKU or product" aria-label="Filter SKUs">
+              <select class="inp" id="trend-sort" aria-label="Sort SKUs">
+                <option value="units">Most units</option><option value="rising">Fastest rising</option>
+                <option value="falling">Fastest falling</option><option value="name">Name A–Z</option>
+              </select>
+            </div>
+            <div class="trend-detail" id="trend-detail" hidden>
+              <div class="panel-head"><h3 id="trend-detail-title">–</h3><span class="faint">daily units, last 91 days</span><div class="spacer"></div>
+                <button class="btn ghost" type="button" id="trend-detail-close">Close</button></div>
+              <div id="chart-sku" class="chart" role="img" aria-label="Daily units sold for the selected SKU"></div>
+            </div>
+            <div class="scroll-y">
+              <table class="trend">
+                <thead><tr><th>SKU</th><th>Product</th><th>Size</th><th class="r">Days 61–90</th><th class="r">Days 31–60</th><th class="r">Last 30 days</th>
+                  <th>Weekly units (13 wk)</th><th class="r">Units</th><th class="r">Revenue</th><th class="r">vs prior 30 d</th></tr></thead>
+                <tbody id="trend-rows"><tr><td colspan="10" class="faint">Loading…</td></tr></tbody>
+              </table>
+            </div>
+            <p class="faint" style="margin:8px 0 0">Click a row to see that SKU's daily sales. Windows end at the current time.</p>
+          </section>
         </section>
 
-        <section class="panel" id="campaigns">
-          <div class="panel-head"><h2>Campaigns</h2><span class="faint">click mix by size, coloured by stock status · spend from the mock ad simulator after the data snapshot</span></div>
-          <div class="scroll-x">
-            <table>
-              <thead><tr><th>Campaign</th><th>Status</th><th class="r">Budget / day</th><th class="r">Spend today</th><th class="r">Clicks</th><th class="r">Wasted today</th><th>Size click mix</th></tr></thead>
-              <tbody id="campaign-rows"></tbody>
-            </table>
-          </div>
+        <!-- ===================== OWNER: CAMPAIGNS ===================== -->
+        <section class="view owner-only" data-view="campaigns">
+          <div class="view-head"><h1>Campaigns</h1><p class="muted">Click mix by size, coloured by stock status. Spend after the data snapshot comes from the mock ad simulator.</p></div>
+          <section class="panel" id="campaigns">
+            <div class="scroll-x">
+              <table>
+                <thead><tr><th>Campaign</th><th>Status</th><th class="r">Budget / day</th><th class="r">Spend today</th><th class="r">Clicks</th><th class="r">Wasted today</th><th>Size click mix</th></tr></thead>
+                <tbody id="campaign-rows"></tbody>
+              </table>
+            </div>
+          </section>
         </section>
 
-        <section class="panel" id="savings">
-          <div class="panel-head"><h2>Savings</h2><span class="faint">from approved actions</span></div>
-          <section class="tiles" style="margin-bottom:8px">
+        <!-- ===================== OWNER: SAVINGS ===================== -->
+        <section class="view owner-only" data-view="savings">
+          <div class="view-head"><h1>Savings</h1><p class="muted">What approved actions have saved so far.</p></div>
+          <section class="tiles">
             <div class="tile"><div class="label">Ad spend avoided</div><div class="value" id="s-avoided">–</div></div>
             <div class="tile"><div class="label">Sales protected</div><div class="value" id="s-protected">–</div></div>
             <div class="tile"><div class="label">Stockouts prevented</div><div class="value" id="s-prevented">–</div></div>
             <div class="tile"><div class="label">Actions executed</div><div class="value" id="s-actions">–</div></div>
           </section>
-          <ul id="ledger" class="faint" style="margin:0;padding-left:18px"></ul>
-          <div class="panel-head" style="margin-top:16px"><h2 style="font-size:1rem">Counterfactual replay</h2>
-            <span class="faint">last 30 days of the synthetic history, with vs without SignalShift, scored against hidden planted stockouts</span>
-            <div class="spacer"></div><button class="btn" id="btn-replay">Run replay</button></div>
-          <div id="replay"></div>
+          <section class="panel" id="savings">
+            <div class="panel-head"><h2>Ledger</h2></div>
+            <ul id="ledger" class="ledger"></ul>
+          </section>
+          <section class="panel">
+            <div class="panel-head"><h2>Counterfactual replay</h2>
+              <span class="faint">last 30 days of the synthetic history, with vs without Ad-Assist, scored against hidden planted stockouts</span>
+              <div class="spacer"></div><button class="btn primary" id="btn-replay">Run replay</button></div>
+            <div id="replay"><p class="faint">Run the replay to compare the two outcomes.</p></div>
+          </section>
         </section>
-      </div>
 
-      <aside class="panel inbox" id="inbox-panel" aria-label="Owner inbox">
-        <div class="panel-head">
-          <h2>Inbox</h2>
-          <div class="tabs" id="inbox-tabs">
-            <button class="tab active" data-s="open">Open</button>
-            <button class="tab" data-s="">All</button>
+        <!-- ===================== OWNER: ASK ===================== -->
+        <section class="view owner-only" data-view="ask">
+          <section class="panel ask-panel" id="ask">
+            <div class="ask-hero">
+              <svg class="ask-ico"><use href="#i-chat"/></svg>
+              <h1>Ask Ad-Assist</h1>
+              <p class="muted">Type a question in the search bar at the top. Answers come from fixed queries over your data, never free-form SQL.</p>
+              <div class="suggest-row" id="ask-suggest">
+                <button class="suggest" type="button">How many Festive White UK 9 did we sell today?</button>
+                <button class="suggest" type="button">Which products will run out this week?</button>
+                <button class="suggest" type="button">How much ad spend did we save today?</button>
+                <button class="suggest" type="button">Why did you recommend pausing the white sneaker campaign?</button>
+              </div>
+            </div>
+            <div id="ask-answers" class="chat"></div>
+          </section>
+        </section>
+
+        <!-- ===================== CUSTOMER: ADS ===================== -->
+        <section class="view customer-only" data-view="ads">
+          <div class="view-head ads-head">
+            <div><h1>Ads for you</h1><p class="muted">Sponsored picks from Solenest. Tap an ad to shop it.</p></div>
+            <div class="spacer"></div>
+            <button class="btn" type="button" id="btn-more-ads"><svg><use href="#i-reset"/></svg><span>Show different ads</span></button>
           </div>
-        </div>
-        <div id="inbox"><p class="faint">Loading…</p></div>
-      </aside>
+          <div class="ad-grid" id="ad-grid"><p class="faint">Loading ads…</p></div>
+          <p class="faint ad-note">Demo: these ads come from the store's live campaigns (a mock ad platform). Each ad shows one size. Some of those sizes may be sold out, just as with real ads.</p>
+        </section>
+
+        <!-- ===================== CUSTOMER: STORE ===================== -->
+        <section class="view customer-only" data-view="store">
+          <div class="banner banner-sm">
+            <div class="banner-text">
+              <h1>Hi, <span id="cust-name">–</span></h1>
+              <p class="biz">Festive picks from <b>Solenest</b>. Stock updates live as people buy.</p>
+              <div class="status-row">
+                <label class="pill">Deliver to
+                  <select id="city" class="inp">
+                    <option>Bengaluru</option><option>Mumbai</option><option>Delhi</option><option>Hyderabad</option>
+                    <option>Chennai</option><option>Pune</option><option>Kolkata</option>
+                  </select>
+                </label>
+                <span class="pill sample">Synthetic sample data</span>
+              </div>
+            </div>
+            <section class="tiles mini" aria-label="Store activity today">
+              <div class="tile" id="tile-orders"><div class="label">Orders today</div><div class="value" id="v-orders">–</div></div>
+              <div class="tile" id="tile-units"><div class="label">Units today</div><div class="value" id="v-units">–</div></div>
+              <div class="tile" id="tile-revenue"><div class="label">Revenue today</div><div class="value" id="v-revenue">–</div></div>
+            </section>
+          </div>
+          <div class="stock-msg" id="stock-msg" role="alert" hidden>
+            <svg><use href="#i-box"/></svg>
+            <div><b>Stock not available</b><div id="stock-msg-text"></div></div>
+            <div class="spacer"></div>
+            <button class="icon-btn" type="button" id="stock-msg-close" aria-label="Dismiss">✕</button>
+          </div>
+          <div class="layout">
+            <section>
+              <div class="panel-head"><h2 id="store-group-title">Hero sneakers</h2><span class="faint">tap a size to buy one pair</span></div>
+              <div class="grid" id="grid"></div>
+            </section>
+            <aside class="feed">
+              <h4>Live sales</h4>
+              <ul id="feed"><li class="t">Waiting for orders…</li></ul>
+            </aside>
+          </div>
+        </section>
+
+        <footer class="note">Ad-Assist prototype · all figures are synthetic sample data for a fictional brand · ad delivery after the data snapshot is simulated (mock)</footer>
+      </main>
     </div>
-    <footer class="note">SignalShift AI prototype · all figures are synthetic sample data for a fictional brand · ad delivery after the data snapshot is simulated (mock)</footer>
-  </main>
+  </div>
+
+  <dialog id="confirm-dlg" class="dlg">
+    <form method="dialog">
+      <h3 id="confirm-title">Are you sure?</h3>
+      <p id="confirm-msg"></p>
+      <div class="dlg-act"><button class="btn" value="cancel">Cancel</button><button class="btn primary" value="ok" id="confirm-ok">Confirm</button></div>
+    </form>
+  </dialog>
   <div class="toast" id="toast"></div>
   <script src="/static/app.js"></script>
+  <script src="/static/store.js"></script>
+  <script src="/static/shell.js"></script>
 </body>
 </html>

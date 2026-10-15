@@ -324,7 +324,7 @@ def t_savings(s: Session, plan: AskPlan, now: datetime, **_: Any) -> TemplateRes
     if not n:
         answer = f"No savings recorded {PERIOD_LABEL[period]} yet. Approving an alert starts the ledger."
     else:
-        answer = (f"{PERIOD_LABEL[period].capitalize()} SignalShift saved {inr(avoided)} in ad spend and protected "
+        answer = (f"{PERIOD_LABEL[period].capitalize()} Ad-Assist saved {inr(avoided)} in ad spend and protected "
                   f"{inr(protected)} of sales across {n} approved alert{'s' if n != 1 else ''}.")
     return TemplateResult("savings", {"period": period},
                           {"ad_spend_avoided": round(float(avoided), 2), "sales_protected": round(float(protected), 2),

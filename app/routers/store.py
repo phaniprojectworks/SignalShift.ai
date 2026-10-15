@@ -16,7 +16,7 @@ WEB = BASE_DIR / "app" / "web"
 
 @router.get("/store", include_in_schema=False)
 def store_page() -> FileResponse:
-    return FileResponse(WEB / "store.html")
+    return FileResponse(WEB / "index.html")  # single-page app: opens on the customer sign-in
 
 
 @router.get("/api/catalog", response_model=list[ProductStock])

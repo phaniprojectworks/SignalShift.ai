@@ -75,7 +75,7 @@ def format_alert(severity: str, report: Report, alert_id: int, source: str) -> s
     lines += ["", "<b>Why</b>"] + [f"• {e(w)}" for w in report.why]
     lines += ["", "<b>What I recommend</b>"] + [f"{i}. {e(r.text)}" for i, r in enumerate(report.recommendations, 1)]
     lines += ["", f"<i>{e(report.estimated_impact)}</i>", "",
-              f"<code>alert #{alert_id} · text: {e(source)} · numbers: SignalShift engine · sample data</code>"]
+              f"<code>alert #{alert_id} · text: {e(source)} · numbers: Ad-Assist engine · sample data</code>"]
     return "\n".join(lines)
 
 
@@ -92,7 +92,7 @@ def format_decision(base: str, d: DecisionOut) -> str:
 
 def format_briefing(summary: dict) -> str:
     counts = summary.get("counts", {})
-    lines = ["<b>☀️ Good morning — SignalShift daily briefing</b>",
+    lines = ["<b>☀️ Good morning — Ad-Assist daily briefing</b>",
              f"Open alerts: {counts.get('critical', 0)} critical, {counts.get('warning', 0)} warning, "
              f"{counts.get('opportunity', 0)} opportunities."]
     for item in summary.get("top", []):
@@ -175,7 +175,7 @@ class Delivery:
         if not cq:
             msg = update.get("message") or {}
             if str(msg.get("chat", {}).get("id")) == self.chat_id and self.client and msg.get("text", "").startswith("/start"):
-                self.client.send_message(self.chat_id, "SignalShift is connected. I'll send stock and ad alerts here.")
+                self.client.send_message(self.chat_id, "Ad-Assist is connected. I'll send stock and ad alerts here.")
                 return "start"
             return None
         chat = str((cq.get("message") or {}).get("chat", {}).get("id", ""))

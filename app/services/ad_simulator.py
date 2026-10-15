@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 
 import numpy as np
 from sqlalchemy import select, text
+from sqlalchemy.orm import Session
 
 from app.config import Settings
 from app.db import Database, sql_ts
@@ -36,6 +37,17 @@ UPSERT = text(
     "cpc = CASE WHEN clicks + excluded.clicks > 0 THEN round((spend + excluded.spend) / (clicks + excluded.clicks), 2) "
     "ELSE cpc END"
 )
+
+
+def recent_cpc_cvr(s: Session, c: Campaign, now: datetime) -> tuple[float, float]:
+    """The campaign's cost per click and conversion rate over the last 7 days (bid-based defaults when new)."""
+    clicks7, spend7, conv7 = s.execute(text(
+        "SELECT COALESCE(SUM(clicks),0), COALESCE(SUM(spend),0), COALESCE(SUM(conversions),0) "
+        "FROM ad_metrics_hourly WHERE campaign_id = :c AND ts >= :a"),
+        {"c": c.id, "a": sql_ts(now - timedelta(days=7))}).one()
+    cpc = spend7 / clicks7 if clicks7 else c.bid * 0.85
+    cvr = conv7 / clicks7 if clicks7 else 0.03
+    return cpc, cvr
 
 
 class AdSimulator:
@@ -59,12 +71,7 @@ class AdSimulator:
                     {"c": c.id, "d": sql_ts(day_start)}) or 0.0)
                 if spent_today >= c.daily_budget:
                     continue  # daily budget exhausted
-                clicks7, spend7, conv7 = s.execute(text(
-                    "SELECT COALESCE(SUM(clicks),0), COALESCE(SUM(spend),0), COALESCE(SUM(conversions),0) "
-                    "FROM ad_metrics_hourly WHERE campaign_id = :c AND ts >= :a"),
-                    {"c": c.id, "a": sql_ts(now - timedelta(days=7))}).one()
-                cpc = spend7 / clicks7 if clicks7 else c.bid * 0.85
-                cvr = conv7 / clicks7 if clicks7 else 0.03
+                cpc, cvr = recent_cpc_cvr(s, c, now)
                 budget_left = c.daily_budget - spent_today
                 expected_spend = min(c.daily_budget * AD_CURVE[now.hour] * sim_seconds / 3600, budget_left)
                 clicks = int(self.rng.poisson(max(expected_spend / cpc, 0.0)))

@@ -19,9 +19,13 @@ pip install -r requirements.txt
 python run.py            # builds the demo data on first run, then serves http://127.0.0.1:4200
 ```
 
-- `/dashboard`: owner dashboard and inbox.
-- `/store`: demo storefront.
+The UI is **Ad-Assist**, a single-page app that opens on a demo sign-in:
+- **Owner** (`owner@solenest.in` / `demo123`): overview with business status, alerts, inventory, sales, campaigns, savings, Ask, and the notifications bell.
+- **Customer** (`customer@demo.in` / `demo123`): *Ads for you* (random ads from the live campaigns) and the demo storefront.
+- Switch between the two from the user menu (top right). Light/dark toggle and in-app Back/Forward buttons are in the top bar.
 - `/docs`: API.
+
+The sign-in is a client-side demo switch between the two views, not authentication.
 
 It runs fully offline: no Gemini key means template reports, and no Telegram token means the in-app inbox only.
 
@@ -32,18 +36,18 @@ It runs fully offline: no Gemini key means template reports, and no Telegram tok
 ```bash
 python scripts/generate_data.py --reset   # rebuild the demo data (seeded; --anchor 2026-10-15T10:00 for a fixed "now")
 python scripts/run_replay.py              # counterfactual replay: with vs without SignalShift
-python -m pytest                          # 120 tests
+python -m pytest                          # 131 tests
 ```
 
 ## The 3-minute demo
 
-Before the demo, open `/dashboard` and click **↺ Reset demo**. This rebuilds the history up to the current hour.
+Before the demo, sign in as the owner and click **Reset demo**. This rebuilds the history up to the current hour.
 *Optional:* set `AD_SIM_SPEED=20` in `.env` so the spend counters move visibly.
 
 1. **The hidden problem.**
    - On the inventory heatmap (Hero tab), Festive White Sneaker shows **160 pairs**, which looks healthy.
    - But **UK 9 has 4 left** (Low, about 16 h of cover) and UK 8 has 11. Its Google and Meta campaigns are live, and **68% of their clicks want UK 8/9** (the size click mix bar).
-2. **A sale.** In `/store` (Hero tab), buy **Festive White · UK 9**. The dashboard tiles and the UK 9 cell update instantly over SSE.
+2. **A sale.** As the customer (user menu → *Switch to customer view*, Hero sneakers), buy **Festive White · UK 9**. The dashboard tiles and the UK 9 cell update instantly over SSE.
 3. **The rush.** Press **⚡ Simulate rush**. Ten orders weighted to UK 8 and UK 9 arrive over about 15 s, and UK 9 and UK 8 drop into the red.
 4. **The alert.** A **Critical** card arrives in the inbox (and on Telegram with Approve/Dismiss buttons, if configured), for example:
    > *UK 9 of Festive White Sneaker has 1 pair left and will sell out in about 1.1 h while 2 ad campaigns keep spending. 68% of the ad clicks are for UK 8 and UK 9.* It recommends pausing both campaigns, re-investing ₹2,000/day in Everyday Runner (about 22 days of cover) and ₹1,000/day in Canvas Low-Top, and reordering UK 8/9. It also shows the likely cover range and a *velocity spike* tag.
@@ -54,6 +58,7 @@ Before the demo, open `/dashboard` and click **↺ Reset demo**. This rebuilds t
 6. **Ask.** Click *"How much ad spend did we save today?"*. The answer comes from a whitelisted query, and its evidence is shown.
 
 **Bonus:**
+- **Wasted spend from the shopper's side:** as the customer, open **Ads for you**. Ads come from the live campaigns, and each shows one size, picked by the campaign's size click mix. Whenever an advertised size is sold out, at least one ad for it is in the mix, and the ad does not say so. Click it: the store opens on that product with **"Stock not available"**. The click is charged at the campaign's CPC and recorded as wasted, so the owner's **Wasted on out-of-stock clicks** tile goes up at once, with a toast if the owner is watching. To have a sold-out size to show, sell out UK 9 first (Simulate rush, then buy the last pairs in the store). Pausing the campaign via Approve removes those ads.
 - *"Why did you recommend pausing the white sneaker campaign?"* retrieves the alert and explains it.
 - **Run replay** in Savings shows 30 days with vs without SignalShift, scored against the hidden planted stockouts.
 
@@ -230,7 +235,9 @@ Every alert decision (alert / refreshed / suppressed / expired) is logged as a J
 | **Tiles** | orders and revenue today, ad spend today, ₹ wasted on out-of-stock clicks (today and last 30 days), open alerts, ad spend avoided |
 | **Ask** | question box with example questions; each answer shows its evidence |
 | **Sales** | orders per hour (today as bars, yesterday as a dotted line, one axis) and top products today |
-| **Inventory** | size heatmap per product (units available + cover, coloured Out / Low < 24 h / Runs out before restock / OK, each with a label) and a "sizes at risk" table. The heatmap shows the hero insight at a glance: Festive White has 160 pairs, but UK 9 is nearly gone. |
+| **Inventory** | size heatmap per product (units available + cover, coloured Out / Low < 24 h / Runs out before restock / OK, each with a label) and a "sizes at risk" table. Both are sorted by quantity, lowest first (switchable to highest first or name). The heatmap shows the hero insight at a glance: Festive White has 160 pairs, but UK 9 is nearly gone. |
+| **Sales page** | every order (server-side paging, newest first; search by order #, SKU, product, size or city; filter by period and channel; new orders appear live), plus a per-SKU 3-month trend: units in each 30-day window, a 13-week sparkline, change vs the prior 30 days, and a daily chart for any SKU you click |
+| **Ads for you** (customer) | 8 random ads from active campaigns (mock ad serving). A click is charged to the campaign's current hour like the ad simulator, recorded as wasted when the size has nothing available, and lands on the store with that product and size highlighted. A sold-out size shows "Stock not available". |
 | **Campaigns** | status, budget, spend, clicks and wasted spend today. Each campaign's size click mix is shown as a segmented bar coloured by each size's stock status. |
 | **Inbox** | alert cards with severity, report, likely cover range, anomalies, who wrote the text (Gemini or template), Approve / Dismiss, and who decided |
 | **Savings** | ad spend avoided, sales protected, stockouts prevented, actions executed, ledger entries, and the counterfactual replay |
@@ -360,11 +367,12 @@ All settings come from env vars or `.env` ([config.py](app/config.py)). Defaults
 | Area | Endpoints |
 |---|---|
 | Orders | `POST /orders`, `GET /api/catalog`, `GET /api/stats/today` |
-| Live events | `GET /stream` (SSE event types: `sale`, `inventory`, `alert`, `report`, `action`, `campaign`, `ads`, `rush`, `reset`, `briefing`) |
+| Live events | `GET /stream` (SSE event types: `sale`, `inventory`, `alert`, `report`, `action`, `campaign`, `ads`, `ad_click`, `rush`, `reset`, `briefing`) |
 | Engine | `POST /engine/run?scope=all` or `scope=live`, `POST /engine/recalibrate` |
 | Alerts | `GET /alerts`, `GET /alerts/{id}`, `POST /alerts/{id}/approve`, `POST /alerts/{id}/dismiss` |
-| Dashboards | `GET /api/dashboard/{sales,inventory,campaigns,savings}` |
+| Dashboards | `GET /api/dashboard/{sales,inventory,campaigns,savings}`, `GET /api/dashboard/orders`, `GET /api/dashboard/sku-trend`, `GET /api/dashboard/sku-trend/{variant_id}` |
 | Ask | `POST /ask`, `GET /ask/log` |
+| Ads (mock) | `GET /api/ads?n=8`, `POST /api/ads/click` (also emits the SSE events `ads` and `ad_click`) |
 | Demo | `POST /demo/reset`, `POST /demo/simulate-rush`, `GET /demo/status`, `GET /savings/replay` |
 | Telegram | `GET /telegram/status`, `POST /telegram/webhook` (webhook mode) |
 
@@ -394,12 +402,12 @@ tests/               one file per phase (120 tests)
 
 ## Tests
 
-`python -m pytest` runs 120 tests (about 2–3 minutes; a full synthetic dataset is generated once per session). They cover:
+`python -m pytest` runs 131 tests (about 2–3 minutes; a full synthetic dataset is generated once per session). They cover:
 - **Data:** the size curve, festival uplift, planted stockouts, and that the stock ledger reconciles.
 - **Orders:** concurrency, never overselling, idempotency.
 - **Engine:** each rule, the cooldown, the size-share logic, the budget-shift ranking, and the demo state reaching Critical.
 - **Reports:** Gemini pass, fail-then-retry, fallback model and template paths with a mocked client, and rejection of a hallucinated number.
-- **Dashboards:** the dashboard APIs and the mock ad simulator.
+- **Dashboards:** the dashboard APIs, the mock ad simulator, the order log and SKU trend, and mock ad serving: ads only from active campaigns, sold-out sizes included, clicks charged, and wasted clicks reaching the owner's tile.
 - **Actions and delivery:** the mock API contracts, the ledger, and Telegram with a fake client and a mocked HTTP layer.
 - **Ask mode:** routing, templates, injection safety, and the Gemini paths.
 - **Demo:** reset, rush, replay, and **the full 3-minute demo script end to end** through the API.

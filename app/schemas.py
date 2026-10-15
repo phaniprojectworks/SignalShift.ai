@@ -346,6 +346,70 @@ class CampaignsOverview(BaseModel):
     campaigns: list[CampaignRow]
 
 
+# --- Sales page: order log + per-SKU trend ---------------------------------------------
+
+class OrderLine(BaseModel):
+    sku: str
+    product_name: str
+    size: str
+    qty: int
+    price: float
+
+
+class OrderLogRow(BaseModel):
+    order_id: int
+    ts: datetime
+    channel: str
+    city: str
+    total: float
+    units: int
+    lines: list[OrderLine]
+
+
+class OrderLog(BaseModel):
+    total: int  # matching orders, before paging
+    limit: int
+    offset: int
+    revenue: float  # of all matching orders
+    units: int
+    rows: list[OrderLogRow]
+
+
+class SkuTrendRow(BaseModel):
+    variant_id: int
+    sku: str
+    product_id: int
+    product_name: str
+    sku_group: str
+    size: str
+    weekly_units: list[int]  # oldest -> newest, one per 7-day window ending now
+    units_by_month: list[int]  # 30-day windows, oldest -> newest (days 61-90, 31-60, last 30)
+    units: int
+    revenue: float
+    change_pct: float | None  # last 30 days vs the 30 before; None when the earlier window had no sales
+
+
+class SkuTrend(BaseModel):
+    as_of: datetime
+    days: int
+    week_starts: list[datetime]
+    rows: list[SkuTrendRow]
+
+
+class DayPoint(BaseModel):
+    date: str
+    units: int
+    revenue: float
+
+
+class SkuDaily(BaseModel):
+    variant_id: int
+    sku: str
+    product_name: str
+    size: str
+    days: list[DayPoint]
+
+
 class LedgerEntry(BaseModel):
     alert_id: int
     ts: datetime
@@ -379,3 +443,41 @@ class DecisionOut(BaseModel):
     decided_at: datetime
     actions: list[ExecutedAction] = Field(default_factory=list)
     ledger: LedgerEntry | None = None
+
+
+# --- Customer ads (mock ad serving) ----------------------------------------------------
+
+class AdOut(BaseModel):
+    campaign_id: int
+    platform: str
+    platform_label: str
+    product_id: int
+    product_name: str
+    model: str
+    color: str
+    sku_group: str
+    sku: str
+    size: str  # the size the ad features; whether it is in stock is deliberately not part of the ad
+    price: float
+    tagline: str
+
+
+class AdClickIn(BaseModel):
+    campaign_id: int
+    sku: str = Field(min_length=1, max_length=40)
+
+
+class AdClickOut(BaseModel):
+    campaign_id: int
+    campaign_name: str
+    platform: str
+    product_id: int
+    product_name: str
+    sku_group: str
+    sku: str
+    size: str
+    available: int
+    in_stock: bool
+    charged: bool  # False when the campaign is paused (it no longer serves ads)
+    cost: float
+    wasted: bool  # charged for a size that cannot be bought
