@@ -1,0 +1,32 @@
+{
+  "_note": "Indian retail calendar used by the synthetic data generator and the Opportunity rule. Festival dates shift every year with the lunar calendar - VERIFY these against an official panchang/government holiday list before relying on them. 'uplift' is the peak demand multiplier per seasonality_tag. 'shape': ramp = rises linearly over window_before to the peak on 'date', then decays over window_after; flat = constant over the whole window.",
+  "events": [
+    {"name": "Navratri & Dussehra", "dates": ["2024-10-12", "2025-10-02", "2026-10-20"],
+     "window_before": 9, "window_after": 1, "shape": "ramp",
+     "uplift": {"festive_hero": 1.6, "gifting": 1.5, "core": 1.25, "accessory": 1.2, "slow": 1.05}},
+
+    {"name": "Dhanteras", "dates": ["2024-10-29", "2025-10-18", "2026-11-06"],
+     "window_before": 2, "window_after": 0, "shape": "ramp",
+     "uplift": {"festive_hero": 1.3, "gifting": 1.35, "core": 1.1, "accessory": 1.1, "slow": 1.0}},
+
+    {"name": "Diwali", "dates": ["2024-11-01", "2025-10-20", "2026-11-08"],
+     "window_before": 21, "window_after": 2, "shape": "ramp",
+     "uplift": {"festive_hero": 3.8, "gifting": 4.2, "core": 1.8, "accessory": 2.0, "slow": 1.2}},
+
+    {"name": "Christmas & New Year", "dates": ["2024-12-25", "2025-12-25"],
+     "window_before": 7, "window_after": 7, "shape": "ramp",
+     "uplift": {"festive_hero": 1.3, "gifting": 1.6, "core": 1.2, "accessory": 1.2, "slow": 1.0}},
+
+    {"name": "End of Season Sale (Winter)", "dates": ["2025-01-03", "2026-01-03"],
+     "window_before": 0, "window_after": 14, "shape": "flat",
+     "uplift": {"festive_hero": 1.05, "gifting": 1.0, "core": 1.35, "accessory": 1.15, "slow": 2.5}},
+
+    {"name": "Raksha Bandhan", "dates": ["2025-08-09", "2026-08-28"],
+     "window_before": 7, "window_after": 0, "shape": "ramp",
+     "uplift": {"festive_hero": 1.15, "gifting": 1.8, "core": 1.1, "accessory": 1.3, "slow": 1.0}},
+
+    {"name": "End of Season Sale (Summer)", "dates": ["2025-06-14", "2026-06-13"],
+     "window_before": 0, "window_after": 21, "shape": "flat",
+     "uplift": {"festive_hero": 1.05, "gifting": 1.0, "core": 1.35, "accessory": 1.15, "slow": 2.5}}
+  ]
+}

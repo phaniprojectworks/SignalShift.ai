@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Solenest Store (demo)</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Solenest<small>demo storefront</small></div>
+    <nav class="nav"><a href="/store" class="active">Store</a><a href="/dashboard" target="_blank" rel="noopener">Dashboard ↗</a></nav>
+    <span class="pill sample">Synthetic sample data</span>
+    <div class="spacer"></div>
+    <label class="pill">City
+      <select id="city" class="inp">
+        <option>Bengaluru</option><option>Mumbai</option><option>Delhi</option><option>Hyderabad</option>
+        <option>Chennai</option><option>Pune</option><option>Kolkata</option>
+      </select>
+    </label>
+    <span class="pill"><span id="live-dot" class="dot"></span><span id="live-label">connecting…</span></span>
+  </header>
+
+  <main class="wrap">
+    <section class="tiles">
+      <div class="tile" id="tile-orders"><div class="label">Orders today</div><div class="value" id="v-orders">–</div></div>
+      <div class="tile" id="tile-units"><div class="label">Units today</div><div class="value" id="v-units">–</div></div>
+      <div class="tile" id="tile-revenue"><div class="label">Revenue today</div><div class="value" id="v-revenue">–</div></div>
+    </section>
+
+    <div class="tabs" id="tabs" style="margin-top:4px">
+      <button class="tab active" data-group="hero">Hero sneakers</button>
+      <button class="tab" data-group="core">Core sneakers</button>
+      <button class="tab" data-group="accessory">Accessories</button>
+      <button class="tab" data-group="slow">Last season</button>
+      <button class="tab" data-group="all">All</button>
+    </div>
+
+    <div class="layout">
+      <section class="grid" id="grid"></section>
+      <aside class="feed">
+        <h4>Live sales</h4>
+        <ul id="feed"><li class="t">Waiting for orders…</li></ul>
+      </aside>
+    </div>
+  </main>
+  <div class="toast" id="toast"></div>
+  <script src="/static/store.js"></script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SignalShift Dashboard</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/vendor/plotly-basic.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">SignalShift AI<small>for Solenest</small></div>
+    <nav class="nav"><a href="/dashboard" class="active">Dashboard</a><a href="/store" target="_blank" rel="noopener">Store ↗</a></nav>
+    <span class="pill sample" title="All figures are generated sample data for a fictional brand">Synthetic sample data</span>
+    <div class="spacer"></div>
+    <button class="btn" id="btn-rush" title="Fire a burst of orders weighted to UK 8 and UK 9 (demo)">⚡ Simulate rush</button>
+    <button class="btn" id="btn-reset" title="Restore the seeded demo state (demo)">↺ Reset demo</button>
+    <span class="pill num" id="asof">–</span>
+    <span class="pill"><span id="live-dot" class="dot"></span><span id="live-label">connecting…</span></span>
+  </header>
+
+  <main class="wrap">
+    <section class="tiles">
+      <div class="tile" id="t-orders"><div class="label">Orders today</div><div class="value" id="k-orders">–</div><div class="sub" id="k-units">–</div></div>
+      <div class="tile" id="t-revenue"><div class="label">Revenue today</div><div class="value" id="k-revenue">–</div><div class="sub">all channels</div></div>
+      <div class="tile" id="t-spend"><div class="label">Ad spend today</div><div class="value" id="k-spend">–</div><div class="sub" id="k-clicks">–</div></div>
+      <div class="tile alarm" id="t-wasted"><div class="label">Wasted on out-of-stock clicks</div><div class="value" id="k-wasted">–</div><div class="sub" id="k-wasted30">–</div></div>
+      <div class="tile" id="t-alerts"><div class="label">Open alerts</div><div class="value" id="k-alerts">–</div><div class="sub" id="k-alerts-sub">–</div></div>
+      <div class="tile" id="t-saved"><div class="label">Ad spend avoided</div><div class="value" id="k-saved">–</div><div class="sub" id="k-protected">–</div></div>
+    </section>
+
+    <div class="dash">
+      <div>
+        <section class="panel" id="ask">
+          <div class="panel-head"><h2>Ask SignalShift</h2><span class="faint">answers come from fixed queries over your data, never free-form SQL</span></div>
+          <form id="ask-form" class="ask-row" autocomplete="off">
+            <input id="ask-input" class="ask-input" maxlength="500" placeholder="e.g. How much ad spend did we save today?" aria-label="Ask a question">
+            <button class="btn primary" type="submit">Ask</button>
+          </form>
+          <div class="tabs" id="ask-suggest" style="margin:10px 0 4px">
+            <button class="tab" type="button">How many Festive White UK 9 did we sell today?</button>
+            <button class="tab" type="button">Which products will run out this week?</button>
+            <button class="tab" type="button">How much ad spend did we save today?</button>
+            <button class="tab" type="button">Why did you recommend pausing the white sneaker campaign?</button>
+          </div>
+          <div id="ask-answers"></div>
+        </section>
+
+        <section class="panel" id="sales">
+          <div class="panel-head"><h2>Sales</h2><span class="faint">orders per hour, today vs yesterday</span></div>
+          <div class="two">
+            <div id="chart-hourly" class="chart" role="img" aria-label="Orders per hour today and yesterday"></div>
+            <div>
+              <table aria-label="Top products today">
+                <thead><tr><th>Top products today</th><th class="r">Units</th><th class="r">Revenue</th></tr></thead>
+                <tbody id="top-products"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="inventory">
+          <div class="panel-head">
+            <h2>Inventory by size</h2>
+            <div class="tabs" id="inv-tabs">
+              <button class="tab active" data-g="hero">Hero</button>
+              <button class="tab" data-g="core">Core</button>
+              <button class="tab" data-g="accessory">Accessories</button>
+              <button class="tab" data-g="slow">Last season</button>
+            </div>
+            <div class="spacer"></div>
+            <div class="legend">
+              <span class="st st-out">Out</span><span class="st st-low">Low (&lt; 24 h)</span>
+              <span class="st st-short">Runs out before restock</span><span class="st st-ok">OK</span>
+            </div>
+          </div>
+          <p class="faint" style="margin:0 0 10px">Each cell: units available · hours/days of cover at the current forecast. A product can look healthy in total while the sizes customers want are almost gone.</p>
+          <div class="scroll-x"><div class="heat" id="heatmap"></div></div>
+          <h3 style="font-size:1rem;margin:18px 0 6px">Sizes at risk</h3>
+          <div class="scroll-x">
+            <table>
+              <thead><tr><th>Product</th><th>Size</th><th class="r">On hand</th><th class="r">In transit</th><th class="r">Demand / day</th><th class="r">Cover</th><th>Status</th></tr></thead>
+              <tbody id="risk-table"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel" id="campaigns">
+          <div class="panel-head"><h2>Campaigns</h2><span class="faint">click mix by size, coloured by stock status · spend from the mock ad simulator after the data snapshot</span></div>
+          <div class="scroll-x">
+            <table>
+              <thead><tr><th>Campaign</th><th>Status</th><th class="r">Budget / day</th><th class="r">Spend today</th><th class="r">Clicks</th><th class="r">Wasted today</th><th>Size click mix</th></tr></thead>
+              <tbody id="campaign-rows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel" id="savings">
+          <div class="panel-head"><h2>Savings</h2><span class="faint">from approved actions</span></div>
+          <section class="tiles" style="margin-bottom:8px">
+            <div class="tile"><div class="label">Ad spend avoided</div><div class="value" id="s-avoided">–</div></div>
+            <div class="tile"><div class="label">Sales protected</div><div class="value" id="s-protected">–</div></div>
+            <div class="tile"><div class="label">Stockouts prevented</div><div class="value" id="s-prevented">–</div></div>
+            <div class="tile"><div class="label">Actions executed</div><div class="value" id="s-actions">–</div></div>
+          </section>
+          <ul id="ledger" class="faint" style="margin:0;padding-left:18px"></ul>
+          <div class="panel-head" style="margin-top:16px"><h2 style="font-size:1rem">Counterfactual replay</h2>
+            <span class="faint">last 30 days of the synthetic history, with vs without SignalShift, scored against hidden planted stockouts</span>
+            <div class="spacer"></div><button class="btn" id="btn-replay">Run replay</button></div>
+          <div id="replay"></div>
+        </section>
+      </div>
+
+      <aside class="panel inbox" id="inbox-panel" aria-label="Owner inbox">
+        <div class="panel-head">
+          <h2>Inbox</h2>
+          <div class="tabs" id="inbox-tabs">
+            <button class="tab active" data-s="open">Open</button>
+            <button class="tab" data-s="">All</button>
+          </div>
+        </div>
+        <div id="inbox"><p class="faint">Loading…</p></div>
+      </aside>
+    </div>
+    <footer class="note">SignalShift AI prototype · all figures are synthetic sample data for a fictional brand · ad delivery after the data snapshot is simulated (mock)</footer>
+  </main>
+  <div class="toast" id="toast"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
