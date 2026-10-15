@@ -16,7 +16,7 @@ Demo business: **Solenest**, a fictional Indian D2C footwear and accessories bra
 
 ```bash
 pip install -r requirements.txt
-python run.py            # builds the demo data on first run, then serves http://127.0.0.1:8000
+python run.py            # builds the demo data on first run, then serves http://127.0.0.1:4200
 ```
 
 - `/dashboard`: owner dashboard and inbox.

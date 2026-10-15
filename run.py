@@ -1,4 +1,4 @@
-"""One-command run: builds the demo database if missing, then starts the server on http://127.0.0.1:8000."""
+"""One-command run: builds the demo database if missing, then starts the server on http://127.0.0.1:4200."""
 from __future__ import annotations
 
 import subprocess
@@ -14,4 +14,4 @@ ROOT = Path(__file__).resolve().parent
 if __name__ == "__main__":
     if not Path(get_settings().database_path).exists():
         subprocess.run([sys.executable, str(ROOT / "scripts" / "generate_data.py"), "--reset"], check=True, cwd=ROOT)
-    uvicorn.run("app.main:create_app", factory=True, host="127.0.0.1", port=8000, app_dir=str(ROOT))
+    uvicorn.run("app.main:create_app", factory=True, host="127.0.0.1", port=4200, app_dir=str(ROOT))
