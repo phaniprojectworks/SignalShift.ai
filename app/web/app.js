@@ -1,5 +1,5 @@
 "use strict";
-/* Ad-Assist owner views: polls the read APIs once, then stays live over Server-Sent Events.
+/* SignalShift.ai owner views: polls the read APIs once, then stays live over Server-Sent Events.
    Started by shell.js after an owner signs in (window.OwnerApp.start). */
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
@@ -364,7 +364,7 @@ async function runReplay() {
     const r = await getJSON("/savings/replay");
     const wo = r.without_signalshift, wi = r.with_signalshift, d = r.detection;
     $("#replay").innerHTML = `<div class="scroll-x"><table>
-      <thead><tr><th></th><th class="r">Without</th><th class="r">With Ad-Assist</th></tr></thead><tbody>
+      <thead><tr><th></th><th class="r">Without</th><th class="r">With SignalShift.ai</th></tr></thead><tbody>
       <tr><td>Wasted on out-of-stock clicks</td><td class="r">${inr.format(wo.wasted_on_out_of_stock_clicks)}</td><td class="r">${inr.format(wi.wasted_on_out_of_stock_clicks)}</td></tr>
       <tr><td>Stockouts</td><td class="r">${wo.stockouts}</td><td class="r">${wo.stockouts - wi.stockouts_prevented}</td></tr>
       <tr><td>Lost sales from stockouts</td><td class="r">${inr.format(wo.lost_sales)}</td><td class="r">${inr.format(wo.lost_sales - wi.sales_protected)}</td></tr>

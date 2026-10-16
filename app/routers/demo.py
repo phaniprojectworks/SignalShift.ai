@@ -44,7 +44,7 @@ def status(request: Request) -> dict:
 
 @router.get("/savings/replay")
 async def replay(request: Request, days: int = 30, approval_delay_hours: float = 1.0, fresh: bool = False) -> dict:
-    """Counterfactual replay of the synthetic history with vs without SignalShift (cached ~5 min)."""
+    """Counterfactual replay of the synthetic history with vs without SignalShift.ai (cached ~5 min)."""
     def _run() -> dict:
         with _replay_lock:
             key = (days, approval_delay_hours)

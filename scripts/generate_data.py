@@ -606,7 +606,7 @@ def _inr(x: float) -> str:
 
 
 def _print_summary(s: dict) -> None:
-    print("SignalShift AI - synthetic data for Solenest (SAMPLE DATA, not real benchmarks)")
+    print("SignalShift.ai - synthetic data for Solenest (SAMPLE DATA, not real benchmarks)")
     print(f"  database          : {s['db']}")
     print(f"  anchor ('now')    : {s['anchor']}  (history: {HISTORY_DAYS} days)")
     print(f"  catalog           : {s['products']} products, {s['variants']} size variants")

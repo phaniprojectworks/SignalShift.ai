@@ -1,5 +1,5 @@
-"""Counterfactual replay: run SignalShift's rules hour by hour over the synthetic history and compare
-"without SignalShift" (what actually happened: ads kept running through stockouts) with "with SignalShift"
+"""Counterfactual replay: run SignalShift.ai's rules hour by hour over the synthetic history and compare
+"without SignalShift.ai" (what actually happened: ads kept running through stockouts) with "with SignalShift.ai"
 (ads paused after the first Critical alert plus an owner approval delay; stockouts counted as prevented when a
 warning came at least one lead time ahead).
 

@@ -91,7 +91,7 @@ def create_app(db_path: str | None = None, evaluate: EvaluateFn | None = None, s
         await bus.stop()
         db.dispose()
 
-    app = FastAPI(title="Ad-Assist", version="0.3.0", lifespan=lifespan)
+    app = FastAPI(title="SignalShift.ai", version="0.3.0", lifespan=lifespan)
     app.state.db = db
     app.state.bus = bus
     app.state.engine = engine

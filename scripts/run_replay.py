@@ -1,4 +1,4 @@
-"""Counterfactual replay: synthetic history with vs without SignalShift, scored against the hidden ground truth.
+"""Counterfactual replay: synthetic history with vs without SignalShift.ai, scored against the hidden ground truth.
 
 Usage:  python scripts/run_replay.py [--days 30] [--approval-delay 1] [--json]
 """
@@ -42,7 +42,7 @@ def main() -> None:
     d, wo, wi = r["detection"], r["without_signalshift"], r["with_signalshift"]
     print(f"Counterfactual replay {r['window']['start']} -> {r['window']['end']} "
           f"({r['window']['days']} days, {r['window']['variants_replayed']} variants)  [SYNTHETIC SAMPLE DATA]\n")
-    print(f"{'':34}{'without':>16}{'with SignalShift':>20}")
+    print(f"{'':34}{'without':>16}{'with SignalShift.ai':>20}")
     print(f"{'Wasted on out-of-stock clicks':34}{inr(wo['wasted_on_out_of_stock_clicks']):>16}"
           f"{inr(wi['wasted_on_out_of_stock_clicks']):>20}")
     print(f"{'Stockouts':34}{wo['stockouts']:>16}{wo['stockouts'] - wi['stockouts_prevented']:>20}")

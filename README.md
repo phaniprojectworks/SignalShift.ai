@@ -1,8 +1,8 @@
-# SignalShift AI
+# SignalShift.ai
 
 **Inventory-aware ad bidding assistant**, a working prototype for AIBuilderCup 2026 (Hack2skill).
 
-Marketing systems and inventory systems don't talk to each other, so ads keep spending on products, and especially on *sizes*, that are about to sell out. SignalShift connects live sales, size-level stock and ad campaigns:
+Marketing systems and inventory systems don't talk to each other, so ads keep spending on products, and especially on *sizes*, that are about to sell out. SignalShift.ai connects live sales, size-level stock and ad campaigns:
 - It estimates **when** a size will stock out and explains **why**.
 - It recommends **what to do**: pause the ads, shift the budget, reorder.
 - It sends the owner a short report, and **one tap on Approve** runs the plan.
@@ -16,10 +16,10 @@ Demo business: **Solenest**, a fictional Indian D2C footwear and accessories bra
 
 ```bash
 pip install -r requirements.txt
-python run.py            # builds the demo data on first run, then serves http://127.0.0.1:4200
+python run.py            # builds the demo data on first run, then serves http://localhost:8080 (change with PORT)
 ```
 
-The UI is **Ad-Assist**, a single-page app that opens on a demo sign-in:
+The UI is **SignalShift.ai**, a single-page app that opens on a demo sign-in:
 - **Owner** (`owner@solenest.in` / `demo123`): overview with business status, alerts, inventory, sales, campaigns, savings, Ask, and the notifications bell.
 - **Customer** (`customer@demo.in` / `demo123`): *Ads for you* (random ads from the live campaigns) and the demo storefront.
 - Switch between the two from the user menu (top right). Light/dark toggle and in-app Back/Forward buttons are in the top bar.
@@ -35,7 +35,7 @@ It runs fully offline: no Gemini key means template reports, and no Telegram tok
 
 ```bash
 python scripts/generate_data.py --reset   # rebuild the demo data (seeded; --anchor 2026-10-15T10:00 for a fixed "now")
-python scripts/run_replay.py              # counterfactual replay: with vs without SignalShift
+python scripts/run_replay.py              # counterfactual replay: with vs without SignalShift.ai
 python -m pytest                          # 131 tests
 ```
 
@@ -60,7 +60,7 @@ Before the demo, sign in as the owner and click **Reset demo**. This rebuilds th
 **Bonus:**
 - **Wasted spend from the shopper's side:** as the customer, open **Ads for you**. Ads come from the live campaigns, and each shows one size, picked by the campaign's size click mix. Whenever an advertised size is sold out, at least one ad for it is in the mix, and the ad does not say so. Click it: the store opens on that product with **"Stock not available"**. The click is charged at the campaign's CPC and recorded as wasted, so the owner's **Wasted on out-of-stock clicks** tile goes up at once, with a toast if the owner is watching. To have a sold-out size to show, sell out UK 9 first (Simulate rush, then buy the last pairs in the store). Pausing the campaign via Approve removes those ads.
 - *"Why did you recommend pausing the white sneaker campaign?"* retrieves the alert and explains it.
-- **Run replay** in Savings shows 30 days with vs without SignalShift, scored against the hidden planted stockouts.
+- **Run replay** in Savings shows 30 days with vs without SignalShift.ai, scored against the hidden planted stockouts.
 
 ## Architecture
 
@@ -298,7 +298,7 @@ Every alert decision (alert / refreshed / suppressed / expired) is logged as a J
 
 ## Ask mode
 
-The **Ask SignalShift** box on the dashboard (or `POST /ask {"question": ...}`) answers questions about the data. **The LLM never writes SQL.**
+The **Ask SignalShift.ai** box on the dashboard (or `POST /ask {"question": ...}`) answers questions about the data. **The LLM never writes SQL.**
 
 1. **Route** ([ask.py](app/services/ask.py)). The question becomes an `AskPlan`: `numbers` with a template, `why`, or `unsupported`.
    - **With Gemini:** structured output, and the template field is an enum of whitelisted templates. Parameters are validated: enums, bounded integers.
@@ -329,13 +329,13 @@ Other templates cover revenue, top sellers, stock left, ad spend and wasted spen
   - Orders for a size that sells out mid-rush are recorded as *sold out*.
 - **Counterfactual replay** (`python scripts/run_replay.py`, `GET /savings/replay`, **Run replay** in Savings), implemented in [replay.py](app/services/replay.py):
   - **What it does:** replays the last 30 days of the synthetic history hour by hour. It reconstructs stock from the movement ledger and applies **the same pure functions as the live engine** (velocity, factors, cover, severity, rush detection).
-  - **Without SignalShift:** ads ran through every stockout.
-  - **With SignalShift:** ads pause one hour (the approval delay) after the first Critical. A stockout counts as *prevented* only if a Warning came at least one full lead time earlier.
+  - **Without SignalShift.ai:** ads ran through every stockout.
+  - **With SignalShift.ai:** ads pause one hour (the approval delay) after the first Critical. A stockout counts as *prevented* only if a Warning came at least one full lead time earlier.
   - **Scoring:** detection is scored against the hidden `ground_truth` table, which only the replay reads.
 
 Example run (seed 2026, anchor 2026-10-15 10:00, synthetic data):
 
-| | Without | With SignalShift |
+| | Without | With SignalShift.ai |
 |---|---:|---:|
 | Wasted on out-of-stock clicks | ₹5,375 | ₹192 |
 | Stockouts | 5 | 3 |

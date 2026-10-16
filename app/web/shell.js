@@ -1,5 +1,5 @@
 "use strict";
-/* Ad-Assist single-page shell: demo sign-in, hash routing with in-app back/forward, theme, popovers.
+/* SignalShift.ai single-page shell: demo sign-in, hash routing with in-app back/forward, theme, popovers.
    Routes: #/login · #/owner/<overview|alerts|inventory|sales|campaigns|savings|ask> · #/customer/<ads|hero|core|accessory|slow|all>
    Sign-in is a client-side demo switch between the owner and customer views; it is not authentication. */
 (() => {
@@ -13,7 +13,7 @@
     customer: { email: "customer@demo.in", name: "Prerana Sulibhavi", role: "customer", roleLabel: "Customer" },
   };
   const DEMO_PASSWORD = "demo123";
-  const KEY_SESSION = "adassist.session", KEY_THEME = "adassist.theme", KEY_MAXIDX = "adassist.maxidx";
+  const KEY_SESSION = "signalshift.session", KEY_THEME = "signalshift.theme", KEY_MAXIDX = "signalshift.maxidx";
 
   const store = {
     get(k, s = sessionStorage) { try { return JSON.parse(s.getItem(k)); } catch (e) { return null; } },
@@ -72,7 +72,7 @@
   function showLogin() {
     $("#app-shell").hidden = true;
     $("#login-view").hidden = false;
-    document.title = "Sign in · Ad-Assist";
+    document.title = "Sign in · SignalShift.ai";
   }
   // the old /store link lands on the customer side of the sign-in form
   if (location.pathname.startsWith("/store")) document.querySelector('input[name="role"][value="customer"]').checked = true;
@@ -101,14 +101,14 @@
     if (sess.role === "owner") {
       document.querySelectorAll('.view[data-view]').forEach((v) => v.classList.toggle("active", v.dataset.view === page));
       const label = document.querySelector(`.side-nav a[data-nav="${page}"] span`).textContent;
-      document.title = `${label} · Ad-Assist`;
+      document.title = `${label} · SignalShift.ai`;
       window.OwnerApp.onShow(page);
     } else {
       const view = page === "ads" ? "ads" : "store";
       document.querySelectorAll('.view[data-view]').forEach((v) => v.classList.toggle("active", v.dataset.view === view));
       if (view === "ads") window.StoreApp.showAds();
       else window.StoreApp.setGroup(page);
-      document.title = view === "ads" ? "Ads for you · Ad-Assist" : "Solenest store · Ad-Assist";
+      document.title = view === "ads" ? "Ads for you · SignalShift.ai" : "Solenest store · SignalShift.ai";
     }
     window.scrollTo({ top: 0 });
   }

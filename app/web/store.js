@@ -1,5 +1,5 @@
 "use strict";
-/* Ad-Assist customer storefront. Started by shell.js after a customer signs in (window.StoreApp.start). */
+/* SignalShift.ai customer storefront. Started by shell.js after a customer signs in (window.StoreApp.start). */
 (() => {
 
 const LOW_STOCK = 5;

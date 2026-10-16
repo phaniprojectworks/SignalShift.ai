@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Ad-Assist</title>
+  <title>SignalShift.ai</title>
   <link rel="stylesheet" href="/static/styles.css">
   <script>
     /* apply the saved theme before first paint so there is no flash */
-    try { const t = localStorage.getItem("adassist.theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+    try { const t = localStorage.getItem("signalshift.theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
   </script>
   <script src="/static/vendor/plotly-basic.min.js"></script>
 </head>
@@ -45,7 +45,7 @@
     <button class="icon-btn theme-toggle login-theme" type="button" aria-label="Toggle dark mode"><svg class="ico-sun"><use href="#i-sun"/></svg><svg class="ico-moon"><use href="#i-moon"/></svg></button>
     <div class="login-card">
       <div class="login-brand">
-        <div class="logo-row"><svg class="logo"><use href="#i-logo"/></svg><span>Ad-Assist</span></div>
+        <div class="logo-row"><svg class="logo"><use href="#i-logo"/></svg><span>SignalShift.ai</span></div>
         <h1>Stop paying for ads on sizes that are about to sell out.</h1>
         <ul>
           <li>Size-level stockout forecasts, with the reason for each</li>
@@ -78,7 +78,7 @@
   <!-- ============================== APP SHELL ============================== -->
   <div id="app-shell" class="shell" hidden>
     <aside class="sidebar" id="sidebar" aria-label="Main navigation">
-      <div class="side-brand"><svg class="logo"><use href="#i-logo"/></svg><span>Ad-Assist</span></div>
+      <div class="side-brand"><svg class="logo"><use href="#i-logo"/></svg><span>SignalShift.ai</span></div>
       <nav class="side-nav owner-only">
         <a href="#/owner/overview" data-nav="overview"><svg><use href="#i-home"/></svg><span>Overview</span></a>
         <a href="#/owner/alerts" data-nav="alerts"><svg><use href="#i-inbox"/></svg><span>Alerts</span><b class="nav-count" id="nav-alerts-count" hidden></b></a>
@@ -348,7 +348,7 @@
           </section>
           <section class="panel">
             <div class="panel-head"><h2>Counterfactual replay</h2>
-              <span class="faint">last 30 days of the synthetic history, with vs without Ad-Assist, scored against hidden planted stockouts</span>
+              <span class="faint">last 30 days of the synthetic history, with vs without SignalShift.ai, scored against hidden planted stockouts</span>
               <div class="spacer"></div><button class="btn primary" id="btn-replay">Run replay</button></div>
             <div id="replay"><p class="faint">Run the replay to compare the two outcomes.</p></div>
           </section>
@@ -359,7 +359,7 @@
           <section class="panel ask-panel" id="ask">
             <div class="ask-hero">
               <svg class="ask-ico"><use href="#i-chat"/></svg>
-              <h1>Ask Ad-Assist</h1>
+              <h1>Ask SignalShift.ai</h1>
               <p class="muted">Type a question in the search bar at the top. Answers come from fixed queries over your data, never free-form SQL.</p>
               <div class="suggest-row" id="ask-suggest">
                 <button class="suggest" type="button">How many Festive White UK 9 did we sell today?</button>
@@ -423,7 +423,7 @@
           </div>
         </section>
 
-        <footer class="note">Ad-Assist prototype · all figures are synthetic sample data for a fictional brand · ad delivery after the data snapshot is simulated (mock)</footer>
+        <footer class="note">SignalShift.ai prototype · all figures are synthetic sample data for a fictional brand · ad delivery after the data snapshot is simulated (mock)</footer>
       </main>
     </div>
   </div>
