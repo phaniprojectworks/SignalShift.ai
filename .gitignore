@@ -5,3 +5,6 @@ __pycache__/
 *.db-wal
 *.db-shm
 .pytest_cache/
+
+# local Claude Code guidance, kept out of the repo
+CLAUDE.md

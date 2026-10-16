@@ -33,6 +33,16 @@ class Settings(BaseSettings):
     gemini_fallback_model: str | None = None
     gemini_timeout_seconds: float = 30.0
     gemini_temperature: float = 0.2
+    # Vertex AI (optional, Google Cloud): call Gemini as the runtime service account instead of with an API key.
+    gemini_use_vertexai: bool = False
+    google_cloud_project: str | None = None  # also used to link Cloud Logging entries to Cloud Trace
+    google_cloud_location: str = "global"
+
+    @property
+    def gemini_configured(self) -> bool:
+        """A model is named and there is a way to call it: an API key, or Vertex AI with a project."""
+        has_auth = bool(self.gemini_api_key) or (self.gemini_use_vertexai and bool(self.google_cloud_project))
+        return bool(self.gemini_model) and has_auth
 
     # Telegram (optional)
     telegram_bot_token: str | None = None

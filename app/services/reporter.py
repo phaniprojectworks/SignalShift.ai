@@ -66,13 +66,27 @@ class LLMClient(Protocol):
 class GeminiClient:
     """google-genai `generate_content` with JSON-schema structured output (response_json_schema)."""
 
-    def __init__(self, api_key: str, timeout_s: float = 30.0, temperature: float = 0.2) -> None:
+    def __init__(self, api_key: str | None, timeout_s: float = 30.0, temperature: float = 0.2,
+                 vertex_project: str | None = None, vertex_location: str = "global") -> None:
+        """With `vertex_project`, calls Gemini on Vertex AI using Application Default Credentials (on Cloud Run:
+        the service account, which needs roles/aiplatform.user); otherwise uses the Gemini API key."""
         from google import genai
         from google.genai import types
 
         self._types = types
-        self._client = genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=int(timeout_s * 1000)))
+        http = types.HttpOptions(timeout=int(timeout_s * 1000))
+        if vertex_project:
+            self._client = genai.Client(vertexai=True, project=vertex_project, location=vertex_location, http_options=http)
+        else:
+            self._client = genai.Client(api_key=api_key, http_options=http)
         self._temperature = temperature
+
+    @classmethod
+    def from_settings(cls, settings: Settings) -> GeminiClient:
+        vertex = settings.gemini_use_vertexai and settings.google_cloud_project
+        return cls(None if vertex else settings.gemini_api_key, settings.gemini_timeout_seconds,
+                   settings.gemini_temperature, vertex_project=settings.google_cloud_project if vertex else None,
+                   vertex_location=settings.google_cloud_location)
 
     def generate(self, model: str, system: str, prompt: str, schema: dict) -> str:
         try:
@@ -213,9 +227,8 @@ class Reporter:
         self.settings = settings
         self.known_products = known_products or []
         self.known_campaigns = known_campaigns or []
-        if client is None and settings.gemini_api_key and settings.gemini_model:
-            client = GeminiClient(settings.gemini_api_key, settings.gemini_timeout_seconds,
-                                  settings.gemini_temperature)
+        if client is None and settings.gemini_configured:
+            client = GeminiClient.from_settings(settings)
         self.client = client
         self.schema = Report.model_json_schema()
 

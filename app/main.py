@@ -14,12 +14,13 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 
 from fastapi import FastAPI, Header, Request
-from fastapi.responses import RedirectResponse, StreamingResponse
+from fastapi.responses import JSONResponse, RedirectResponse, StreamingResponse
+from sqlalchemy import text
 from fastapi.staticfiles import StaticFiles
 
 from app.config import BASE_DIR, Settings, get_settings
 from app.db import Database, init_db
-from app.logging_setup import setup_logging
+from app.logging_setup import reset_request_trace, set_request_trace, setup_logging
 from app.routers import ads, alerts, ask, dashboards, demo, orders, store, telegram
 from app.services.demo import DemoService
 from app.services.ask import AskService
@@ -117,11 +118,27 @@ def create_app(db_path: str | None = None, evaluate: EvaluateFn | None = None, s
     @app.middleware("http")
     async def timing(request: Request, call_next):  # type: ignore[no-untyped-def]
         started = time.perf_counter()
-        response = await call_next(request)
-        if request.url.path.startswith(("/api/", "/alerts", "/orders", "/engine")):
-            http_log.info("request", extra={"path": request.url.path, "status": response.status_code,
-                                            "ms": round((time.perf_counter() - started) * 1000)})
-        return response
+        token = set_request_trace(request.headers.get("x-cloud-trace-context"), settings.google_cloud_project)
+        try:
+            response = await call_next(request)
+            if request.url.path.startswith(("/api/", "/alerts", "/orders", "/engine")):
+                http_log.info("request", extra={"path": request.url.path, "status": response.status_code,
+                                                "ms": round((time.perf_counter() - started) * 1000)})
+            return response
+        finally:
+            reset_request_trace(token)
+
+    @app.get("/health", tags=["ops"])
+    def health() -> JSONResponse:
+        """Liveness/readiness for Cloud Run probes and uptime checks: the process is up and the database answers.
+        (Not /healthz: Cloud Run reserves URL paths that end in "z".)"""
+        try:
+            with db.session() as s:
+                s.execute(text("SELECT 1"))
+        except Exception as e:  # noqa: BLE001 - report any database failure as unhealthy
+            log.warning("health check failed", extra={"error": str(e)})
+            return JSONResponse({"status": "error", "database": "unavailable"}, status_code=503)
+        return JSONResponse({"status": "ok", "database": "ok", "version": app.version})
 
     @app.get("/", include_in_schema=False)
     def root() -> RedirectResponse:

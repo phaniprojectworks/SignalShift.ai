@@ -36,7 +36,7 @@ It runs fully offline: no Gemini key means template reports, and no Telegram tok
 ```bash
 python scripts/generate_data.py --reset   # rebuild the demo data (seeded; --anchor 2026-10-15T10:00 for a fixed "now")
 python scripts/run_replay.py              # counterfactual replay: with vs without SignalShift.ai
-python -m pytest                          # 131 tests
+python -m pytest                          # 140 tests
 ```
 
 ## The 3-minute demo
@@ -346,6 +346,15 @@ Example run (seed 2026, anchor 2026-10-15 10:00, synthetic data):
 - **Early signal:** for slow-selling sizes, "stockout before the ads can be paused" only becomes true at the stockout itself, so Criticals fire at that hour. The early signal is the **Warning**: all 5 stockouts were warned a median of **9.4 days** ahead.
 - **Prevention:** only 2 warnings came a full 12-day lead time ahead, so only 2 stockouts count as prevented.
 
+## Deploying on Google Cloud
+
+The app runs on **Cloud Run** from the [Dockerfile](Dockerfile). [deploy/GOOGLE_CLOUD.md](deploy/GOOGLE_CLOUD.md) covers:
+- the current setup and its risks
+- step-by-step, opt-in upgrades: service settings, Secret Manager, Cloud Logging / Error Reporting, health checks, Litestream to Cloud Storage, Vertex AI Gemini, Cloud Build CI/CD, Telegram webhooks, Cloud Monitoring
+- a roadmap (Cloud SQL, Pub/Sub, Cloud Scheduler, IAP, BigQuery)
+
+`GET /health` is the probe endpoint.
+
 ## Configuration
 
 All settings come from env vars or `.env` ([config.py](app/config.py)). Defaults let the app run with no `.env` at all.
@@ -361,6 +370,9 @@ All settings come from env vars or `.env` ([config.py](app/config.py)). Defaults
 | `BUDGET_SHIFT_MIN_COVER_DAYS`, `PAUSE_CLICK_SHARE` | 14, 0.6 | Budget-shift eligibility, and the at-risk click share that triggers a pause |
 | `AD_SIM_ENABLED`, `AD_SIM_SPEED` | true, 1 | Mock live ad delivery, and its time compression for demos |
 | `DATABASE_PATH`, `TIMEZONE`, `SEED` | `signalshift.db`, `Asia/Kolkata`, 2026 | Storage, business timezone, data seed |
+| `PORT` | 8080 | Port `run.py` serves on (Cloud Run sets it) |
+| `GEMINI_USE_VERTEXAI`, `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION` | false, unset, `global` | Gemini through Vertex AI as the service account (no API key); the project also links logs to Cloud Trace |
+| `LITESTREAM_REPLICA_URL` | unset | Container only: SQLite on local disk, continuously replicated to Cloud Storage (see [deploy/GOOGLE_CLOUD.md](deploy/GOOGLE_CLOUD.md)) |
 
 ## API (also at `/docs`)
 
@@ -394,15 +406,17 @@ app/
     ask.py           router, whitelisted templates, FTS5 retrieval, answer composer
     replay.py        counterfactual replay vs hidden ground truth
     demo.py          reset + rush; ad_simulator.py (MOCK ad delivery); dashboards.py; triggers.py
-  routers/           orders, store, alerts, dashboards, ask, demo, telegram (no business logic)
+  routers/           orders, store, alerts, dashboards, ask, demo, telegram, ads (no business logic)
   web/               dashboard (index.html, app.js), store, styles.css, vendored Plotly
 scripts/             generate_data.py, run_replay.py, check_gemini.py
-tests/               one file per phase (120 tests)
+deploy/              start.sh (container entrypoint), GOOGLE_CLOUD.md (deployment guide)
+Dockerfile, cloudbuild.yaml
+tests/               one file per phase
 ```
 
 ## Tests
 
-`python -m pytest` runs 131 tests (about 2–3 minutes; a full synthetic dataset is generated once per session). They cover:
+`python -m pytest` runs 140 tests (about 2–3 minutes; a full synthetic dataset is generated once per session). They cover:
 - **Data:** the size curve, festival uplift, planted stockouts, and that the stock ledger reconciles.
 - **Orders:** concurrency, never overselling, idempotency.
 - **Engine:** each rule, the cooldown, the size-share logic, the budget-shift ranking, and the demo state reaching Critical.

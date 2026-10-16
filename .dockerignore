@@ -1,0 +1,11 @@
+# keep secrets, local databases and dev clutter out of the image
+.git
+.env
+*.db
+*.db-wal
+*.db-shm
+__pycache__/
+*.pyc
+.pytest_cache/
+tests/
+CLAUDE.md

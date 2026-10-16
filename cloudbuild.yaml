@@ -1,0 +1,43 @@
+# Cloud Build pipeline: test -> build -> push to Artifact Registry -> deploy a new Cloud Run revision.
+#
+# Run by hand:   gcloud builds submit --config cloudbuild.yaml --substitutions=_REGION=asia-south1,_SERVICE=signalshift
+# Or attach it to a Cloud Build trigger on pushes to main (see deploy/GOOGLE_CLOUD.md).
+#
+# The deploy step passes ONLY --image, so Cloud Run keeps everything else already configured on the service:
+# the Cloud Storage volume mount, env vars, secrets, scaling and CPU settings. If the tests fail, nothing is
+# built or deployed. If the new revision fails to start, Cloud Run keeps serving the previous one.
+
+substitutions:
+  _REGION: asia-south1        # change to your Cloud Run region
+  _SERVICE: signalshift       # change to your Cloud Run service name
+  _REPO: signalshift          # Artifact Registry Docker repository (created once, see deploy/GOOGLE_CLOUD.md)
+  _IMAGE: ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/app
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  dynamicSubstitutions: true
+
+timeout: 1800s
+
+steps:
+  - id: test
+    name: python:3.11-slim
+    entrypoint: bash
+    args: ["-c", "pip install --no-cache-dir -q -r requirements.txt && python -m pytest -q -p no:cacheprovider"]
+
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "${_IMAGE}:${BUILD_ID}", "-t", "${_IMAGE}:latest", "."]
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: ["push", "--all-tags", "${_IMAGE}"]
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args: ["run", "deploy", "${_SERVICE}", "--image", "${_IMAGE}:${BUILD_ID}", "--region", "${_REGION}", "--quiet"]
+
+images:
+  - ${_IMAGE}:${BUILD_ID}
+  - ${_IMAGE}:latest

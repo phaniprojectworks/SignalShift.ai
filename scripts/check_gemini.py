@@ -28,8 +28,8 @@ from app.services.reporter import ReportService  # noqa: E402
 
 def main() -> None:
     st = get_settings()
-    if not (st.gemini_api_key and st.gemini_model):
-        sys.exit("Set GEMINI_API_KEY and GEMINI_MODEL in .env first.")
+    if not st.gemini_configured:
+        sys.exit("Set GEMINI_MODEL plus GEMINI_API_KEY (or GEMINI_USE_VERTEXAI=true and GOOGLE_CLOUD_PROJECT) first.")
     tmp = Path(tempfile.mkdtemp()) / "check.db"
     src, dst = sqlite3.connect(st.database_path), sqlite3.connect(tmp)
     src.backup(dst)
