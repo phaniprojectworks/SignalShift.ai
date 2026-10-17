@@ -119,7 +119,8 @@ resource.type="cloud_run_revision" AND severity>=WARNING
 
 The new `/health` route returns `200 {"status":"ok"}` when the process is up and the database answers, and `503` otherwise. Add it as a **liveness probe**:
 - Where: Cloud Run → service → **Edit & deploy new revision** → container → **Health checks**.
-- Settings: HTTP GET `/health`, period 30 s, failure threshold 3.
+- Settings: HTTP GET `/health`, period 30 s, **timeout 10 s**, failure threshold 5.
+- **Do not leave the timeout at its default of 1 s.** The app does heavy work in the background (forecast recalibration, demo reset), and a slow `/health` answer counts as a failure. After enough failures Cloud Run restarts the only instance, and while it restarts every request gets `Rate exceeded.` (HTTP 429). If in doubt, skip this probe: it is optional.
 
 Keep the default TCP **startup** probe. The very first start generates the demo data before the server listens, which can take a minute.
 
