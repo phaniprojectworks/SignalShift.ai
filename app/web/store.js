@@ -22,16 +22,6 @@ function toast(msg, isErr = false) {
   t._h = setTimeout(() => (t.className = "toast"), 2600);
 }
 
-function setToday(today) {
-  const set = (id, tile, v) => {
-    const el = $(id);
-    if (el.textContent !== v) { el.textContent = v; $(tile).classList.remove("flash"); void $(tile).offsetWidth; $(tile).classList.add("flash"); }
-  };
-  set("#v-orders", "#tile-orders", num.format(today.orders));
-  set("#v-units", "#tile-units", num.format(today.units));
-  set("#v-revenue", "#tile-revenue", inr.format(today.revenue));
-}
-
 function sizeButton(p, v) {
   const b = document.createElement("button");
   b.className = "size-btn" + (v.available > 0 && v.available <= LOW_STOCK ? " low" : "");
@@ -134,7 +124,7 @@ function connect() {
   const es = new EventSource("/stream");
   es.onopen = () => { $("#live-dot").className = "dot live"; $("#live-label").textContent = "live"; };
   es.onerror = () => { $("#live-dot").className = "dot"; $("#live-label").textContent = "reconnecting…"; };
-  es.addEventListener("sale", (e) => { const ev = JSON.parse(e.data); setToday(ev.data.today); addFeed(ev.data, ev.ts); });
+  es.addEventListener("sale", (e) => { const ev = JSON.parse(e.data); addFeed(ev.data, ev.ts); });
   es.addEventListener("inventory", (e) => applyInventory(JSON.parse(e.data).data));
   es.addEventListener("campaign", () => { if (onAds) loadAds(); });  // a paused campaign stops serving ads
 }
@@ -196,9 +186,7 @@ function setGroup(g) {
 }
 
 async function init() {
-  const [cat, today] = await Promise.all([fetch("/api/catalog").then((r) => r.json()), fetch("/api/stats/today").then((r) => r.json())]);
-  products = cat;
-  setToday(today);
+  products = await fetch("/api/catalog").then((r) => r.json());
   render();
   connect();
 }
